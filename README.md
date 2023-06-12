@@ -1,6 +1,11 @@
 # 2023_Capstone
 2023-1 캡스톤
 
+## run
+1. templates.py 에서 원하는 param 변경
+2. 터미널 or run.ipynb(Jupyter Notebook)에서 ```!python main.py --template 'train_bert'``` 실행  
+
+
 ### main BERT4Rec code 참고
 - [paper] https://arxiv.org/abs/1904.06690
 - [code] https://github.com/jaywonchung/BERT4Rec-VAE-Pytorch.git  
