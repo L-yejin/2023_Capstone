@@ -16,11 +16,14 @@ def set_template(args):
         args.train_batch_size = batch
         args.val_batch_size = batch
         args.test_batch_size = batch
-
-        args.data_type = 'noise'
-        args.model_embedding = 'hyper_embedding'#'origin_embedding'
-
-
+        
+        # Data Augmentation parameter 지정 부분 → 아직 추가해야됨. args만 만들어둔 거
+        args.data_type = 'noise' # 'noise','similarity','redundancy'
+        args.N_Aug = 10 # [5, 10, 15]
+        args.P = 0.1 # [0.1, 0.2, 0.3]
+        
+        # Embedding 방법 선택
+        args.model_embedding = 'origin_embedding' # 'hyper_embedding'
 
         args.train_negative_sampler_code = 'random'
         args.train_negative_sample_size = 0
@@ -30,7 +33,7 @@ def set_template(args):
         args.test_negative_sampling_seed = 98765
 
         args.trainer_code = 'bert'
-        args.device = 'cpu' #'cuda'
+        args.device = 'cuda' # 'cpu'
         args.num_gpu = 1
         args.device_idx = '0'
         args.optimizer = 'Adam'
@@ -45,7 +48,7 @@ def set_template(args):
         args.model_code = 'bert'
         args.model_init_seed = 0
 
-        args.bert_dropout = 0.1
+        args.bert_dropout = 0.1 # 0.5
         args.bert_hidden_units = 256
         args.bert_mask_prob = 0.15
         args.bert_max_len = 100
