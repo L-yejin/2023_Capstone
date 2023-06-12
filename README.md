@@ -6,7 +6,10 @@
 ## run
 1. templates.py 에서 원하는 param 변경
 2. 터미널 or run.ipynb(Jupyter Notebook)에서 ```!python main.py --template 'train_bert'``` 실행  
+3. ml-1m 사용하려면 ```1``` 입력. ml-20m 사용하려면 ```20``` 입력.
+4. train 완료 후, test 진행하고 싶으면 ```y``` 입력.  
 
+*Data는 없어도 코드 실행될 때, 없으면 다운 받아짐*  
 
 
 ## 참고 논문 및 코드
