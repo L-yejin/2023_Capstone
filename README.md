@@ -2,6 +2,7 @@
 2023-1 캡스톤
 
 main BERT4Rec code 참고
+- [paper] https://arxiv.org/abs/1904.06690
 - [code] https://github.com/jaywonchung/BERT4Rec-VAE-Pytorch.git
 
 Data Augmentation 참고 논문
