@@ -54,5 +54,4 @@ def set_template(args):
         args.bert_max_len = 100
         args.bert_num_blocks = 2
         args.bert_num_heads = 4
-        args.bert_num_items = 6807
 
