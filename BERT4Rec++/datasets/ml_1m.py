@@ -32,4 +32,10 @@ class ML1MDataset(AbstractDataset):
         df.columns = ['uid', 'sid', 'rating', 'timestamp']
         return df
 
+    def load_contents_df(self):
+        folder_path = self._get_rawdata_folder_path()
+        file_path = folder_path.joinpath('movies.dat')
+        df = pd.read_csv(file_path, sep='::', header=None,encoding='latin-1')
+        df.columns = ['sid', 'title', 'genres']
+        return df
 
