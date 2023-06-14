@@ -22,5 +22,11 @@ def train():
 if __name__ == '__main__':
     if args.mode == 'train':
         train()
+    elif args.mode == 'test':
+        export_root = args.test_model_path
+        train_loader, val_loader, test_loader = dataloader_factory(args)
+        model = model_factory(args)
+        trainer = trainer_factory(args, model, train_loader, val_loader, test_loader, export_root)
+        trainer.test()
     else:
         raise ValueError('Invalid mode')
