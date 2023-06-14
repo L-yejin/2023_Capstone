@@ -11,12 +11,6 @@
 
 *Data는 없어도 코드 실행될 때, 없으면 다운 받아짐*  
 
-### test mode 추가
-- templates.py에서 아래와 같이 변경후, ```!python main.py --template 'train_bert'``` 실행  
-  1. args.mode = 'test'
-  2. args.test_model_path = 'experiments/[생성한 폴더명]/' 으로 입력
-
-
 ## 참고 논문 및 코드
 ### main BERT4Rec code 참고
 - [paper] https://arxiv.org/abs/1904.06690
