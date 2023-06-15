@@ -183,8 +183,8 @@ class AbstractDataset(metaclass=ABCMeta):
 
     def _get_preprocessed_folder_path(self):
         preprocessed_root = self._get_preprocessed_root_path()
-        folder_name = '{}_min_rating{}-min_uc{}-min_sc{}-split{}' \
-            .format(self.code(), self.min_rating, self.min_uc, self.min_sc, self.split)
+        folder_name = 'type_{}-size_{}-p{}-drop{}-embedding_{}' \
+            .format(self.args.data_type, self.args.N_Aug, self.args.P, self.args.bert_dropout, self.args.model_embedding)
         return preprocessed_root.joinpath(folder_name)
 
     def _get_preprocessed_dataset_path(self):
