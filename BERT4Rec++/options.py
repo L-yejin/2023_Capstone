@@ -34,9 +34,13 @@ parser.add_argument('--eval_set_size', type=int, default=500,
                     help='Size of val and test set. 500 for ML-1m and 10000 for ML-20m recommended')
 
 # Data Augmentation
-parser.add_argument('--data_type', type=str, default=None, choices=['noise','similarity','redundancy']) # 데이터 타입 | 노이즈,유사성,중복성 
+parser.add_argument('--data_type', type=str, default='origin_dataset', choices=['origin_dataset','noise','similarity','redundancy']) # 데이터 타입 | 노이즈,유사성,중복성 
 parser.add_argument('--N_Aug', type=int, default=None, choices=[5, 10, 15]) # 데이터 증강 규모
 parser.add_argument('--p', type=float, default=None, choices=[0.1, 0.2, 0.3]) # 데이터 변경 비율
+# data_type이 noise인 경우, popular을지 전체에서 뽑을지 결정정
+parser.add_argument('--type_noise_item', type=str, default='all_item', choices=['all_item','popular_item'])
+parser.add_argument('--type_noise_item_size', type=int, default=None)
+
 
 ################
 # Dataloader
