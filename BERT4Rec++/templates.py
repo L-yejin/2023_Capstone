@@ -3,7 +3,7 @@ def set_template(args):
         return
 
     elif args.template.startswith('train_bert'):
-        args.mode = 'train'# 'train','test
+        args.mode = 'train' # 'train','test
         args.test_model_path = None # test path
 
         args.dataset_code = 'ml-' + input('Input 1 for ml-1m, 20 for ml-20m: ') + 'm'
