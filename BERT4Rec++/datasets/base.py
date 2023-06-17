@@ -107,13 +107,8 @@ class AbstractDataset(metaclass=ABCMeta):
         df = self.partial_data(df) #샘플링 시에만 
         df = self.make_implicit(df)
         df = self.filter_triplets(df)
-        
-        if self.data_type == 'origin_dataset': # 데이터 증강을 하지 않은 경우
-            df, umap, smap = self.densify_index(df)
-        elif self.data_type == 'noise_dataset': # 데이터 타입 지정되어 있는 경우
-            print('adding noise augmentation is processing...')
-            df, umap, smap = self.addNoise(df, self.N_Aug, self.P) #densify 기능 포함
-        elif self.data_type == 'similarity':
+        df = self.get_sequence(df)
+        if self.data_type == 'similarity':
             print('Simialrity augmentation is processing...')
             df = self.get_sequence(df)
             self.get_cbf()
