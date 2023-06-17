@@ -13,6 +13,13 @@ import tempfile
 import shutil
 import pickle
 
+import re
+import random
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 from collections import Counter
 import random
 
@@ -38,10 +45,18 @@ class AbstractDataset(metaclass=ABCMeta):
         self.min_uc = args.min_uc
         self.min_sc = args.min_sc
         self.split = args.split
-
+        self.max_len = args.bert_max_len
+        self.mat = None
+        self.id_2_idx = None
+        self.idx_2_id = None
+        self.data_type = args.data_type
+        self.N_Aug = args.N_Aug
+        self.P = args.P
+        self.ratio = args.dataset_ratio
         self.data_type = args.data_type # 데이터 증강 타입 지정
         self.N_Aug = args.N_Aug # 데이터 증강 규모
         self.P = args.P # 데이터 증강 비율
+        self.sampling_seed = args.sampling_seed # 샘플링 시드
 
         assert self.min_uc >= 2, 'Need at least 2 ratings per user for validation and test'
 
@@ -92,11 +107,13 @@ class AbstractDataset(metaclass=ABCMeta):
         df = self.load_ratings_df()
         df = self.make_implicit(df)
         df = self.filter_triplets(df)
-        
-        if self.data_type == 'origin_dataset': # 데이터 증강을 하지 않은 경우
+        df = self.partial_data(df) #샘플링 시에만
+        if self.data_type == 'similarity':
+            print('Simialrity augmentation is processing...')
+            df = self.get_sequence(df)
+            self.get_cbf()
+            df = self.sim_augmentation(df)
             df, umap, smap = self.densify_index(df)
-        elif self.data_type == 'noise_dataset': # 데이터 타입 지정되어 있는 경우
-            df, umap, smap = self.addNoise(df, self.N_Aug, self.P)
         else: # 다른 타입꺼 추가하기
             pass
         
@@ -136,6 +153,17 @@ class AbstractDataset(metaclass=ABCMeta):
             shutil.rmtree(tmproot)
             print()
 
+    def partial_data(self, df):
+        if self.ratio == 1:
+            return df
+        print(f'Partial {self.ratio} data')
+        # 10%의 행만 랜덤하게 샘플링
+        df = df.sample(frac=self.ratio, random_state=self.sampling_seed)
+        df = df.reset_index(drop=True)
+        # idx = round(df.shape[0] * self.ratio)
+        # df = df.iloc[:idx]
+        return df
+
     def make_implicit(self, df):
         print('Turning into implicit ratings')
         df = df[df['rating'] >= self.min_rating]
@@ -153,16 +181,26 @@ class AbstractDataset(metaclass=ABCMeta):
             user_sizes = df.groupby('uid').size()
             good_users = user_sizes.index[user_sizes >= self.min_uc]
             df = df[df['uid'].isin(good_users)]
-
         return df
-
-    def densify_index(self, df):
+    
+    def get_sequence(self,df):
+        user_group = df.groupby('uid')
+        user2items = user_group.progress_apply(lambda d: list(d.sort_values(by='timestamp')['sid']))
+        return user2items
+    
+    def densify_index(self, user2items):
         print('Densifying index')
-        umap = {u: i for i, u in enumerate(set(df['uid']))}
-        smap = {s: i for i, s in enumerate(set(df['sid']))}
-        df['uid'] = df['uid'].map(umap)
-        df['sid'] = df['sid'].map(smap)
-        return df, umap, smap
+        aug = []
+        for i in user2items.index:
+            aug += user2items[i]
+        aug = list(set(aug))
+        umap = {u: i for i, u in enumerate(user2items.index)} 
+        smap = {s: i for i, s in enumerate(aug)}
+        #densifying index
+        user2items.index = umap.values() 
+        for i in range(len(umap)):
+            user2items[i] = [smap[i] for i in user2items[i]]
+        return user2items, umap, smap
 
     # Noise 추가하는 부분
     def addNoise(self, df, N_Aug, p):
@@ -170,8 +208,10 @@ class AbstractDataset(metaclass=ABCMeta):
         rng = random.Random(seed)
 
         smap = {s: i for i, s in enumerate(set(df['sid']))}
-        user_group = df.groupby('uid')
-        user2items = user_group.progress_apply(lambda d: list(d.sort_values(by='timestamp')['sid']))
+        user2items = self.get_sequence(df)
+        # user_group = df.groupby('uid')
+        # user2items = user_group.progress_apply(lambda d: list(d.sort_values(by='timestamp')['sid']))
+        
 
         popularity = Counter() # 인기있는 item 목록 뽑기
         for user in sorted(user2items.keys()):
@@ -227,8 +267,9 @@ class AbstractDataset(metaclass=ABCMeta):
         if self.args.split == 'leave_one_out':
             print('Splitting')
             if self.data_type == 'origin_dataset': # 데이터 증강을 하지 않은 경우
-                user_group = df.groupby('uid')
-                user2items = user_group.progress_apply(lambda d: list(d.sort_values(by='timestamp')['sid']))
+                # user_group = df.groupby('uid')
+                # user2items = user_group.progress_apply(lambda d: list(d.sort_values(by='timestamp')['sid']))
+                user2items = self.get_sequence(df)
             elif self.data_type != 'origin_dataset': # 데이터 증강을 한 경우
                 print('Skip')
                 user2items = df
@@ -237,29 +278,63 @@ class AbstractDataset(metaclass=ABCMeta):
                 items = user2items[user]
                 train[user], val[user], test[user] = items[:-2], items[-2:-1], items[-1:]
             return train, val, test
-        elif self.args.split == 'holdout': # 이건 일단 제외
-            print('Splitting')
-            np.random.seed(self.args.dataset_split_seed)
-            eval_set_size = self.args.eval_set_size
-
-            # Generate user indices
-            permuted_index = np.random.permutation(user_count)
-            train_user_index = permuted_index[                :-2*eval_set_size]
-            val_user_index   = permuted_index[-2*eval_set_size:  -eval_set_size]
-            test_user_index  = permuted_index[  -eval_set_size:                ]
-
-            # Split DataFrames
-            train_df = df.loc[df['uid'].isin(train_user_index)]
-            val_df   = df.loc[df['uid'].isin(val_user_index)]
-            test_df  = df.loc[df['uid'].isin(test_user_index)]
-
-            # DataFrame to dict => {uid : list of sid's}
-            train = dict(train_df.groupby('uid').progress_apply(lambda d: list(d['sid'])))
-            val   = dict(val_df.groupby('uid').progress_apply(lambda d: list(d['sid'])))
-            test  = dict(test_df.groupby('uid').progress_apply(lambda d: list(d['sid'])))
-            return train, val, test
         else:
             raise NotImplementedError
+        
+    def sim_augmentation(self, user2items):
+        K = self.N_Aug
+        usr_idx_max = max(user2items.index) + 1 #추가할 인덱스
+        for usr_idx in list(user2items.index): 
+            seq = user2items[usr_idx][-self.max_len:] #max_len만큼의 시퀀스
+            replace_num = round(len(seq) * self.P) #시퀀스의 P만큼 증강
+            for _ in range(K): #증강규모만큼 반복
+                copied_seq = seq.copy() #원본 시퀀스 복사
+                choice = random.sample(copied_seq, k=replace_num)
+                for c in choice:
+                    idx = copied_seq.index(c) #샘플링된 영화의 인덱스
+                    sim_item = self.get_movieid(c) #샘플링된 영화의 유사 영화
+                    copied_seq[idx] = sim_item
+                user2items[usr_idx_max] = copied_seq #새로운 인덱스에 새로운 시퀀스 추가
+                usr_idx_max += 1
+        return user2items
+
+    def get_cbf(self):
+        self.id_2_idx, self.idx_2_id = self.get_vocab()
+        self.mat = self.cbf_preprocess()
+
+    def cbf_preprocess(self):
+        movie = self.load_contents_df()
+        movie['genres'] = movie['genres'].str.split('|')
+        movie['year'] = movie['title'].apply(lambda x: x.split(' (')[1])
+        movie['year'] = movie['year'].apply(lambda x: x.replace(')','').strip())
+        movie['title'] = movie['title'].apply(lambda x: x.split(' (')[0])
+        p = re.compile('[^a-zA-Z0-9]')
+        movie['title'] = movie['title'].apply(lambda x: p.sub(' ', x))
+        movie['title'] = movie['title'].apply(lambda x: word_tokenize(x.lower()))
+        stop_words = set(stopwords.words('english'))
+        movie['title'] = movie['title'].apply(lambda x: [w for w in x if not w in stop_words])
+        movie['title'] = movie['title'].apply(lambda x: ' '.join(x))
+        movie['genres'] = movie['genres'].apply(lambda x: ' '.join(x).lower())
+        movie['metadata'] = movie['title'] + ' ' + movie['genres'] + ' ' + movie['year']
+        tfidf = TfidfVectorizer()
+        tfidf_matrix = tfidf.fit_transform(movie['metadata'])
+        cosine_matrix = cosine_similarity(tfidf_matrix, tfidf_matrix)
+        return cosine_matrix
+
+    def get_movieid(self,movie_id):
+        idx = self.id_2_idx[movie_id]
+        sim_idx = self.mat[idx].argsort()[::-1][random.randint(0,3)] # Top 3 random
+        sim_item = self.idx_2_id[sim_idx]
+        return sim_item
+    
+    def get_vocab(self):
+        movie_id = self.load_contents_df()['sid']
+        id_2_idx = {}
+        idx_2_id = {}
+        for i, c in enumerate(movie_id):
+            id_2_idx[c] = i
+            idx_2_id[id_2_idx[c]] = c
+        return id_2_idx, idx_2_id
 
     def _get_rawdata_root_path(self):
         return Path(RAW_DATASET_ROOT_FOLDER)
@@ -274,8 +349,8 @@ class AbstractDataset(metaclass=ABCMeta):
 
     def _get_preprocessed_folder_path(self):
         preprocessed_root = self._get_preprocessed_root_path()
-        folder_name = 'type_{}-size_{}-p{}-drop{}-embedding_{}' \
-            .format(self.args.data_type, self.args.N_Aug, self.args.P, self.args.bert_dropout, self.args.model_embedding)
+        folder_name = 'type_{}-size_{}-p{}-drop{}-embedding_{}-data_ratio_{}' \
+            .format(self.args.data_type, self.args.N_Aug, self.args.P, self.args.bert_dropout, self.args.model_embedding,self.args.data_ratio)
         return preprocessed_root.joinpath(folder_name)
 
     def _get_preprocessed_dataset_path(self):
