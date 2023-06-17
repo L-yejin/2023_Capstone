@@ -18,9 +18,9 @@ def set_template(args):
         args.test_batch_size = batch
         
         # Data Augmentation parameter 지정 부분 → 아직 추가해야됨. args만 만들어둔 거
-        args.data_type = None # 'noise','similarity','redundancy'
-        args.N_Aug = None # [5, 10, 15]
-        args.P = None # [0.1, 0.2, 0.3]
+        args.data_type = 'similarity' # 'noise','similarity','redundancy'
+        args.N_Aug = 10 # [5, 10, 15]
+        args.P = 0.1 # [0.1, 0.2, 0.3]
         
         # Embedding 방법 선택
         args.model_embedding = 'origin_embedding' # 'hyper_embedding'
@@ -48,11 +48,10 @@ def set_template(args):
         args.model_code = 'bert'
         args.model_init_seed = 0
 
-        args.bert_dropout = 0.1 # 0.5
+        args.bert_dropout = 0.5 # 0.5
         args.bert_hidden_units = 256
         args.bert_mask_prob = 0.15
         args.bert_max_len = 100
         args.bert_num_blocks = 2
         args.bert_num_heads = 4
-        args.bert_num_items = 6807
 

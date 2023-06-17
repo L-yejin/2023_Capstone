@@ -37,6 +37,7 @@ parser.add_argument('--eval_set_size', type=int, default=500,
 parser.add_argument('--data_type', type=str, default=None, choices=['noise','similarity','redundancy']) # 데이터 타입 | 노이즈,유사성,중복성 
 parser.add_argument('--N_Aug', type=int, default=None, choices=[5, 10, 15]) # 데이터 증강 규모
 parser.add_argument('--p', type=float, default=None, choices=[0.1, 0.2, 0.3]) # 데이터 변경 비율
+parser.add_argument('--dataset_ratio', type=float, default=1, choices=[0.1, 0.2, 0.3]) # 데이터 변경 비율
 
 ################
 # Dataloader
