@@ -38,6 +38,8 @@ parser.add_argument('--data_type', type=str, default='origin_dataset', choices=[
 parser.add_argument('--N_Aug', type=int, default=None, choices=[5, 10, 15]) # 데이터 증강 규모
 parser.add_argument('--dataset_ratio', type=float, default=1, choices=[0.1, 0.2, 0.3]) # 데이터 샘플링 비율
 parser.add_argument('--P', type=float, default=None, choices=[0.1, 0.2, 0.3]) # 데이터 변경 비율
+parser.add_argument('--sampling_seed', type=int, default=1004)
+
 # data_type이 noise인 경우, popular을지 전체에서 뽑을지 결정정
 parser.add_argument('--type_noise_item', type=str, default='all_item', choices=['all_item','popular_item'])
 parser.add_argument('--type_noise_item_size', type=int, default=None)

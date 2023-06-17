@@ -56,6 +56,7 @@ class AbstractDataset(metaclass=ABCMeta):
         self.data_type = args.data_type # 데이터 증강 타입 지정
         self.N_Aug = args.N_Aug # 데이터 증강 규모
         self.P = args.P # 데이터 증강 비율
+        self.sampling_seed = args.sampling_seed # 샘플링 시드
 
         assert self.min_uc >= 2, 'Need at least 2 ratings per user for validation and test'
 
@@ -107,7 +108,7 @@ class AbstractDataset(metaclass=ABCMeta):
         df = self.partial_data(df) #샘플링 시에만 
         df = self.make_implicit(df)
         df = self.filter_triplets(df)
-        df = self.get_sequence(df)
+        
         if self.data_type == 'similarity':
             print('Simialrity augmentation is processing...')
             df = self.get_sequence(df)
@@ -157,8 +158,11 @@ class AbstractDataset(metaclass=ABCMeta):
         if self.ratio == 1:
             return df
         print(f'Partial {self.ratio} data')
-        idx = round(df.shape[0] * self.ratio)
-        df = df.iloc[:idx]
+        # 10%의 행만 랜덤하게 샘플링
+        df = df.sample(frac=self.ratio, random_state=self.sampling_seed)
+        df = df.reset_index(drop=True)
+        # idx = round(df.shape[0] * self.ratio)
+        # df = df.iloc[:idx]
         return df
 
     def make_implicit(self, df):

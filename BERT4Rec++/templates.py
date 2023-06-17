@@ -19,9 +19,10 @@ def set_template(args):
         args.test_batch_size = batch
         
         # Data Augmentation parameter 지정 부분 → 아직 추가해야됨. args만 만들어둔 거
-        args.data_type = 'similarity' # 'noise','similarity','redundancy'
+        args.data_type = 'origin_dataset' # 'noise','similarity','redundancy'
         args.N_Aug = 10 # [5, 10, 15]
         args.P = 0.1 # [0.1, 0.2, 0.3]
+        args.dataset_ratio = 1
         
         # Embedding 방법 선택
         args.model_embedding = 'origin_embedding' # 'hyper_embedding'
