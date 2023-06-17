@@ -105,10 +105,9 @@ class AbstractDataset(metaclass=ABCMeta):
             dataset_path.parent.mkdir(parents=True)
         self.maybe_download_raw_dataset()
         df = self.load_ratings_df()
-        df = self.partial_data(df) #샘플링 시에만 
         df = self.make_implicit(df)
         df = self.filter_triplets(df)
-        
+        df = self.partial_data(df) #샘플링 시에만
         if self.data_type == 'similarity':
             print('Simialrity augmentation is processing...')
             df = self.get_sequence(df)
