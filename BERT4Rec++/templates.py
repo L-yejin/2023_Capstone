@@ -3,7 +3,8 @@ def set_template(args):
         return
 
     elif args.template.startswith('train_bert'):
-        args.mode = 'train'
+        args.mode = 'train' # 'train','test
+        args.test_model_path = None # test path
 
         args.dataset_code = 'ml-' + input('Input 1 for ml-1m, 20 for ml-20m: ') + 'm'
         args.min_rating = 0 if args.dataset_code == 'ml-1m' else 4
@@ -18,9 +19,14 @@ def set_template(args):
         args.test_batch_size = batch
         
         # Data Augmentation parameter 지정 부분 → 아직 추가해야됨. args만 만들어둔 거
-        args.data_type = 'similarity' # 'noise','similarity','redundancy'
-        args.N_Aug = 10 # [5, 10, 15]
-        args.P = 0.1 # [0.1, 0.2, 0.3]
+        args.data_type = 'origin_dataset' # 'origin_dataset','noise_dataset','similarity','redundancy'
+        args.N_Aug = None # [5, 10, 15]
+        args.P = None # [None, 0.1, 0.2, 0.3]
+        args.dataset_ratio = None #데이터 샘플링 비율
+
+        # data type이 noise인 경우, 아래 항목 중 선택
+        args.type_noise_item = 'all_item' # ['all_item','popular_item']
+        args.type_noise_item_size = 300
         
         # Embedding 방법 선택
         args.model_embedding = 'origin_embedding' # 'hyper_embedding'
