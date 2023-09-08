@@ -1,5 +1,5 @@
 from .bert import BERTEmbedding # 기존 Embedding
-from .bert import BERTEmbedding_Hyper # Hyperbolic Embedding
+from .bert_hyper import BERTEmbedding_Hyper # Hyperbolic Embedding
 
 EMBEDDING = {
     BERTEmbedding.code(): BERTEmbedding,

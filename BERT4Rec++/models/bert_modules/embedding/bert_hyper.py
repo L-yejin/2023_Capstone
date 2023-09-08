@@ -4,8 +4,8 @@ from .position import PositionalEmbedding
 ###
 from .hyptorch.nn import HypLinear
 
-# 기존 Embedding 방법
-class BERTEmbedding(nn.Module):
+# Hyperbolic Embedding 방법
+class BERTEmbedding_Hyper(nn.Module):
     """
     BERT Embedding which is consisted with under features
         1. TokenEmbedding : normal embedding matrix
@@ -26,12 +26,17 @@ class BERTEmbedding(nn.Module):
         self.position = PositionalEmbedding(max_len=max_len, d_model=embed_size)
         # self.segment = SegmentEmbedding(embed_size=self.token.embedding_dim)
         self.dropout = nn.Dropout(p=dropout)
-        self.embed_size = embed_size\
+        self.embed_size = embed_size
+        ###
+        self.c = 1
+        self.hyper_embed = HypLinear(self.embed_size, self.embed_size, self.c)
 
     @classmethod
     def code(cls):
-        return 'origin_embedding'
+        return 'hyper_embedding'
 
     def forward(self, sequence):
         x = self.token(sequence) + self.position(sequence)  # + self.segment(segment_label)
+        ###
+        x = self.hyper_embed(x)
         return self.dropout(x)
